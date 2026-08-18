@@ -13,17 +13,28 @@ A schema-agnostic Python framework designed to carve deleted records, reconstruc
 
 ## Installation
 
-Clone the repository and install the package in editable mode:
+### Option 1: Standalone Windows Executable (Recommended)
+You do not need Python installed to run SQLite-Ghost! 
+Simply download `sqlite-ghost.exe` from the GitHub Releases page and run it directly from your command line.
+
+### Option 2: Build from Source
+If you want to modify the code or build the executable yourself:
 
 ```bash
 git clone <your-repo-url>
 cd SqliteGhost
+
+# Install dependencies
 python -m pip install -e .
+
+# (Optional) Build standalone executable
+python -m pip install pyinstaller
+pyinstaller --onefile --name sqlite-ghost cli_entry.py
 ```
 
 ## Usage
 
-SQLite-Ghost exposes a simple command-line interface:
+SQLite-Ghost exposes a simple command-line interface. If you downloaded the executable, use `sqlite-ghost.exe` instead of `sqlite-ghost` in the commands below:
 
 **1. Parse a Database**
 ```bash
