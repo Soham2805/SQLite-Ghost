@@ -17,7 +17,7 @@ Clone the repository and install the package in editable mode:
 
 ```bash
 git clone <your-repo-url>
-cd Miniproject
+cd SqliteGhost
 python -m pip install -e .
 ```
 
