@@ -65,17 +65,50 @@ def report(db_path, html):
         
     mtime = os.path.getmtime(db_path)
     header = parse_database_header(db_data[:100])
-    page1 = parse_page(db_data[:header['page_size']], is_page_1=True)
-    slack = carve_slack_space(db_data[:header['page_size']], page1, is_page_1=True)
+    page_size = header['page_size']
+    num_pages = len(db_data) // page_size
     
-    score, anomalies = calculate_anomaly_score(page1, header['page_size'], slack, file_mtime=mtime, is_page_1=True)
+    all_anomalies = []
+    total_slack = 0
+    max_severity_weight = 0
+    weights = {'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1}
+    
+    for i in range(num_pages):
+        is_p1 = (i == 0)
+        page_data = db_data[i*page_size : (i+1)*page_size]
+        try:
+            page = parse_page(page_data, is_page_1=is_p1)
+            slack = carve_slack_space(page_data, page, is_page_1=is_p1)
+            total_slack += len(slack)
+            
+            _, page_anoms = calculate_anomaly_score(page, page_size, slack, file_mtime=mtime, is_page_1=is_p1)
+            
+            for anom in page_anoms:
+                anom['desc'] = f"[Page {i+1}] {anom['desc']}"
+                all_anomalies.append(anom)
+                max_severity_weight = max(max_severity_weight, weights.get(anom['severity'], 0))
+                
+        except Exception as e:
+            anom = {'severity': 'CRITICAL', 'desc': f"[Page {i+1}] Parser crashed: {str(e)}"}
+            all_anomalies.append(anom)
+            max_severity_weight = max(max_severity_weight, weights['CRITICAL'])
+            
+    threat_level = "CLEAN"
+    if max_severity_weight == 4:
+        threat_level = "CRITICAL"
+    elif max_severity_weight == 3:
+        threat_level = "HIGH"
+    elif max_severity_weight == 2:
+        threat_level = "MEDIUM"
+    elif max_severity_weight == 1:
+        threat_level = "LOW"
     
     report_data = {
         'db_path': db_path,
-        'page_size': header['page_size'],
-        'anomalies': anomalies,
-        'anomaly_score': score,
-        'slack_records': len(slack)
+        'page_size': page_size,
+        'anomalies': all_anomalies,
+        'anomaly_score': threat_level,
+        'slack_records': total_slack
     }
     
     generate_html(report_data, html)
