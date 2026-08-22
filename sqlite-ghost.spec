@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['cli_entry.py'],
+    ['sqlite_ghost/cli.py'],
     pathex=[],
     binaries=[],
     datas=[],

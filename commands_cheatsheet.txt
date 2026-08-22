@@ -1,0 +1,49 @@
+======================================================
+         SQLite-Ghost Commands Cheat Sheet
+======================================================
+
+Below are all the possible commands and their variations for the SQLite-Ghost framework. You can run these commands from the root directory of the project.
+
+------------------------------------------------------
+1. The 'report' Command (Primary Forensic Pipeline)
+------------------------------------------------------
+Generates an interactive single-page HTML report and automated exports. It scans both the main database and WAL segments, carving deleted records and matching suspicious triage markers.
+
+# Basic HTML Report Generation:
+> python sqlite_ghost/cli.py report sms.db --html report.html
+
+# Comprehensive Export (HTML + JSON):
+> python sqlite_ghost/cli.py report sms.db --html report.html --json-out report.json
+
+# Enterprise Mode (Custom Keywords + Automated Packaging):
+> python sqlite_ghost/cli.py report sms.db --html report.html --json-out report.json --keywords keywords.txt --package
+
+  *Explanation of flags:*
+  --html <path>       : (Optional) Path where the interactive HTML report will be saved.
+  --json-out <path>   : (Optional) Path to output a machine-readable JSON timeline for SIEM integration.
+  --keywords <path>   : (Optional) Path to a .txt file containing custom keywords or regex rules (one per line). Overrides default markers.
+  --package           : (Optional) Automatically zips the original database, WAL, HTML, and JSON into a tamper-evident archive with a final SHA-256 hash.
+
+------------------------------------------------------
+2. The 'parse' Command (Rapid Triage)
+------------------------------------------------------
+Quickly parses standard extraction outputs to the terminal without running the deep carving engine. Good for verifying database health and header information.
+
+# Parse Main Database:
+> python sqlite_ghost/cli.py parse sms.db
+
+# Parse Main Database + WAL (Differential Analysis):
+> python sqlite_ghost/cli.py parse sms.db --wal sms.db-wal
+
+  *Explanation of flags:*
+  --wal <path>        : (Optional) Path to the associated Write-Ahead Log (WAL) file for analysis.
+
+------------------------------------------------------
+3. The 'carve' Command (Raw Unallocated Scan)
+------------------------------------------------------
+Performs a deep scan of the unallocated slack space within the provided database, outputting the raw number of orphaned records found to the terminal.
+
+# Basic Carving:
+> python sqlite_ghost/cli.py carve sms.db
+
+======================================================

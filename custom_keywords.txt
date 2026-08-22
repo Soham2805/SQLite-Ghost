@@ -1,0 +1,10 @@
+payload
+backdoor
+exfiltrate
+zero-day
+ransom
+spyware
+keylogger
+exploit
+trojan
+botnet

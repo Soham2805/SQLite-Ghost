@@ -4,46 +4,31 @@ from .varint import decode_varint
 from .btree_parser import BTreePage
 from .serial_types import parse_serial_type
 
+import re
+
 def find_serial_type_clusters(buffer: bytes, start_offset: int, end_offset: int) -> List[Dict[str, Any]]:
     carved = []
-    i = start_offset
-    while i < end_offset - 4:
+    
+    # Robust Forensic String Carving
+    # Because deleted cells are overwritten with freeblock pointers, their headers are destroyed.
+    # Trying to parse serial types leads to false positives that swallow multiple messages.
+    # Instead, we directly carve contiguous printable text payloads from the unallocated space!
+    
+    search_area = buffer[start_offset:end_offset]
+    
+    # Match any contiguous block of printable ASCII/UTF-8 characters (length >= 10)
+    for match in re.finditer(b'[\x20-\x7E]{10,}', search_area):
+        s = match.group(0)
         try:
-            header_size, hs_bytes = decode_varint(buffer, i)
-            if 3 <= header_size <= min(end_offset - i, 100):
-                current_offset = i + hs_bytes
-                serial_types = []
-                valid_cluster = True
-                
-                while current_offset < i + header_size:
-                    stype, st_bytes = decode_varint(buffer, current_offset)
-                    if st_bytes == 0:
-                        valid_cluster = False
-                        break
-                    serial_types.append(stype)
-                    current_offset += st_bytes
-                
-                if valid_cluster and current_offset == i + header_size:
-                    values = []
-                    data_offset = i + header_size
-                    for stype in serial_types:
-                        val, val_len = parse_serial_type(stype, buffer, data_offset)
-                        if val_len == 0 and stype not in (0, 8, 9, 10, 11):
-                            valid_cluster = False
-                            break
-                        values.append(val)
-                        data_offset += val_len
-                        
-                    if valid_cluster and values:
-                        carved.append({
-                            'offset': i,
-                            'data': values,
-                            'raw': buffer[i:data_offset]
-                        })
-                        i = data_offset - 1
-        except Exception:
+            decoded = s.decode('utf-8')
+            carved.append({
+                'offset': start_offset + match.start(),
+                'data': [decoded],
+                'raw': s
+            })
+        except:
             pass
-        i += 1
+            
     return carved
 
 def carve_slack_space(page_data: bytes, page: BTreePage, is_page_1: bool = False) -> List[Dict[str, Any]]:

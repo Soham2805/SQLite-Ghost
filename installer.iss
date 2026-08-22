@@ -1,6 +1,6 @@
 [Setup]
 AppName=SQLite-Ghost
-AppVersion=0.1.0
+AppVersion=0.1.2
 AppPublisher=Soham2805
 DefaultDirName={autopf}\SQLite-Ghost
 DefaultGroupName=SQLite-Ghost
@@ -11,6 +11,8 @@ ArchitecturesInstallIn64BitMode=x64
 ChangesEnvironment=yes
 
 [Files]
+Source: "commands_cheatsheet.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "custom_keywords.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "dist\sqlite-ghost.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
